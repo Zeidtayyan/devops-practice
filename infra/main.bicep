@@ -1,4 +1,4 @@
-targetScope = 'subscription'
+targetScope = 'resourceGroup'
 
 // The main bicep module to provision Azure resources.
 // For a more complete walkthrough to understand how this file works with azd,
@@ -9,9 +9,8 @@ targetScope = 'subscription'
 @description('Name of the the environment which is used to generate a short unique hash used in all resources.')
 param environmentName string
 
-@minLength(1)
-@description('Primary location for all resources')
-param location string
+@description('The location for all resources')
+param location string = resourceGroup().location
 
 // Optional parameters to override the default azd resource naming conventions.
 // Add the following to main.parameters.json to provide values:
@@ -20,7 +19,16 @@ param location string
 // }
 param resourceGroupName string = ''
 param appServiceName string = ''
-param appServicePlanName string = ''
+@description('The name of the container registry')
+param containerRegistryName string
+@description('The name of the app service plan')
+param appServicePlanName string
+@description('The name of the web app')
+param webAppName string
+@description('The name of the container image')
+param containerImageName string
+@description('The version/tag of the container image')
+param containerImageVersion string = 'latest'
 
 var abbrs = loadJsonContent('./abbreviations.json')
 
@@ -50,31 +58,51 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 
 // Add resources to be provisioned below.
 
-// The application App
-module web './core/host/appservice.bicep' = {
-  name: 'web'
-  scope: rg
+// Deploy Azure Container Registry
+module acr './modules/acr.bicep' = {
+  name: 'acr-deployment'
   params: {
-    name: !empty(appServiceName) ? appServiceName : '${abbrs.webSitesAppService}web-${resourceToken}'
+    name: containerRegistryName
     location: location
-    appServicePlanId: appServicePlan.outputs.id
-    runtimeName: 'python'
-    runtimeVersion: '3.13'
-    scmDoBuildDuringDeployment: true
-    tags: union(tags, { 'azd-service-name': 'web' })
+    acrAdminUserEnabled: true
   }
 }
 
-// Create an App Service Plan to group applications under the same payment plan and SKU
-module appServicePlan './core/host/appserviceplan.bicep' = {
-  name: 'appserviceplan'
-  scope: rg
+// Deploy App Service Plan
+module appServicePlan './modules/app-service-plan.bicep' = {
+  name: 'app-service-plan-deployment'
   params: {
-    name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
+    name: appServicePlanName
     location: location
-    tags: tags
     sku: {
+      capacity: 1
+      family: 'B'
       name: 'B1'
+      size: 'B1'
+      tier: 'Basic'
+    }
+    kind: 'Linux'
+    reserved: true
+  }
+}
+
+// Deploy Web App
+module webApp './modules/web-app.bicep' = {
+  name: 'web-app-deployment'
+  params: {
+    name: webAppName
+    location: location
+    kind: 'app'
+    serverFarmResourceId: appServicePlan.outputs.id
+    siteConfig: {
+      linuxFxVersion: 'DOCKER|${acr.outputs.loginServer}/${containerImageName}:${containerImageVersion}'
+      appCommandLine: ''
+    }
+    appSettingsKeyValuePairs: {
+      WEBSITES_ENABLE_APP_SERVICE_STORAGE: 'false'
+      DOCKER_REGISTRY_SERVER_URL: 'https://${acr.outputs.loginServer}'
+      DOCKER_REGISTRY_SERVER_USERNAME: acr.outputs.adminUsername
+      DOCKER_REGISTRY_SERVER_PASSWORD: acr.outputs.adminPassword
     }
   }
 }

@@ -2,11 +2,23 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-      "environmentName": {
-        "value": "${AZURE_ENV_NAME}"
-      },
       "location": {
-        "value": "${AZURE_LOCATION}"
+        "value": "eastus"
+      },
+      "containerRegistryName": {
+        "value": "acrflaskapp123"
+      },
+      "appServicePlanName": {
+        "value": "asp-flaskapp123"
+      },
+      "webAppName": {
+        "value": "webapp-flaskapp123"
+      },
+      "containerImageName": {
+        "value": "flaskapp"
+      },
+      "containerImageVersion": {
+        "value": "latest"
       }
     }
 }
