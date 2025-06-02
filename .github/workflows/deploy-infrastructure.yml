@@ -4,13 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'infra/**'
-  workflow_dispatch:
-
-permissions:
-  id-token: write
-  contents: read
 
 env:
   RESOURCE_GROUP: aguadamillas_students_1
