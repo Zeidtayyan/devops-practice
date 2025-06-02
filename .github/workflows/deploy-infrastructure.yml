@@ -1,30 +1,29 @@
-name: Deploy Infrastructure to Azure
+name: Deploy Infrastructure 
 
 on:
   push:
     branches:
       - main
 
-env:
-  RESOURCE_GROUP: aguadamillas_students_1
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Azure login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy Bicep
-        uses: azure/arm-deploy@v1
-        with:
-          scope: resourcegroup
-          subscriptionId: e0b9cada-61bc-4b5a-bd7a-52c606726b3b
-          resourceGroupName: BCSAI2024-DEVOPS-STUDENTS-A-UAT
-          template: ./infra/main.bicep
-          parameters: ./infra/main.parameters.json 
+
+    - name: Deploy Bicep Template
+      run: |
+        az deployment group create \
+          --name zeidexercise \
+          --subscription e0b9cada-61bc-4b5a-bd7a-52c606726b3b \
+          --resource-group BCSAI2024-DEVOPS-STUDENTS-A-UAT \
+          --template-file main.bicep \
+          --parameters @main.parameters.json
