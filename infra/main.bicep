@@ -67,10 +67,10 @@ module appServicePlan './modules/app-service-plan.bicep' = {
     location: location
     sku: {
       capacity: 1
-      family: 'B'
-      name: 'B1'
-      size: 'B1'
-      tier: 'Basic'
+      family: 'F'
+      name: 'F1'
+      size: 'F1'
+      tier: 'Free'
     }
     kind: 'Linux'
     reserved: true
