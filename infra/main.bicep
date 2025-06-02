@@ -49,15 +49,6 @@ var resourceToken = toLower(uniqueString(subscription().id, environmentName, loc
 // Example usage:
 //   tags: union(tags, { 'azd-service-name': apiServiceName })
 
-// Organize resources in a resource group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
-  location: location
-  tags: tags
-}
-
-// Add resources to be provisioned below.
-
 // Deploy Azure Container Registry
 module acr './modules/acr.bicep' = {
   name: 'acr-deployment'
